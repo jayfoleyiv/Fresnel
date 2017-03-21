@@ -3,7 +3,6 @@
 #include<math.h>
 #include<string.h>
 #include<malloc.h>
-#include"memory.h"
 #include<complex.h>
 
 // Function Prototypes
@@ -97,6 +96,8 @@ int main(int argc, char* argv[]) {
   k0 = 1000./lambda;
 
   //  Loop over incident angle and/or wavelength
+
+  fprintf(fp,"# Incident Angle Wavelength  Reflectance \n");
   for (i=0; i<360; i++) {
 
      // Increment incident angle
@@ -117,7 +118,7 @@ int main(int argc, char* argv[]) {
      refl = creal(r*conj(r));
 
      //  Print the reflectance, incident angle, and wavelength to the output file
-     fprintf(fp,"  %12.10f %12.10f  %12.10f  %12.10f\n",thetaI*180./3.14159,lambda,refl);
+     fprintf(fp,"  %12.10f %12.10f  %12.10f \n",thetaI*180./pi,lambda,refl);
   }
 
 fclose(fp);
