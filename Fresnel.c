@@ -2,8 +2,8 @@
 #include<stdlib.h>
 #include<math.h>
 #include<string.h>
-#include<malloc.h>
-#include<complex.h>
+#include</usr/include/malloc/malloc.h>
+#include</usr/include/complex.h>
 
 // Function Prototypes
 int *VEC_INT(int dim);
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
   polflag=1;
 
   // Total number of layers in the structure, including terminal layers (which are taken to have infinite thickness)
-  Nlayer=4;
+  Nlayer=3;
 
   pi = 3.14159265359;
 
@@ -68,9 +68,8 @@ int main(int argc, char* argv[]) {
   d = VEC_DOUBLE(Nlayer);
 
   d[0] = 0.;
-  d[1] = 0.299999999999999;
-  d[2] = 0.265;
-  d[3] = 0.;
+  d[1] = 0.4;
+  d[2] = 0.;
 
   //  Vector to store the complex refractive index of each layer
   rind = VEC_CDOUBLE(Nlayer);
@@ -83,25 +82,27 @@ int main(int argc, char* argv[]) {
 */
 
   //  4-layer structure that mimics a 2-layer structure
-  rind[0] = 4.33 + 0.*I;
-  rind[1] = 2.25 + 0.*I;
-  rind[2] = 2.25 + 0.*I;
-  rind[3] = 2.25 + 0.*I;
+  rind[0] = 1.0 + 0.*I;
+  rind[1] = 1.5 + 0.1*I;
+  rind[2] = 1.0 + 0.*I;
 
 
   // Wavelength in nanometers
   lambda = 500.;
 
   // Wavenumber in inverse micrometers
-  k0 = 1000./lambda;
+  k0 = 2*pi*1000./lambda;
 
+  // Assumes terminal layers have real refractive indices (non-absorbing)
+  double n1 = creal(rind[0]);
+  double n2 = creal(rind[Nlayer-1]);
+  double Tangle, Trans;
   //  Loop over incident angle and/or wavelength
-
   fprintf(fp,"# Incident Angle Wavelength  Reflectance \n");
-  for (i=0; i<360; i++) {
+  for (i=0; i<45; i++) {
 
      // Increment incident angle
-     thetaI=(0.25*i)*3.14159/180.;
+     thetaI=i*pi/180.;
 
      // Solve transfer matrix equations for incident angle thatI, wavenumber k0,
      // and structure defined by layers with refractive indices stored in the vector rind
@@ -113,12 +114,15 @@ int main(int argc, char* argv[]) {
   
      // Fresnel transmission coefficient (also complex if there are absorbing layers)
      t = 1./m11;
+     Tangle = n2*creal(cosL)/(n1*cos(thetaI));
 
      // Reflectance, which is a real quantity between 0 and 1
      refl = creal(r*conj(r));
+     // Transmission, a real quantity between 0 and 1
+     Trans = creal(t*conj(t))*Tangle;
 
      //  Print the reflectance, incident angle, and wavelength to the output file
-     fprintf(fp,"  %12.10f %12.10f  %12.10f \n",thetaI*180./pi,lambda,refl);
+     fprintf(fp,"  %12.10f %12.10f  %12.10f %12.10f\n",thetaI*180./pi,lambda,refl, Trans);
   }
 
 fclose(fp);
