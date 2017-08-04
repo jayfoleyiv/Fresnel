@@ -71,17 +71,40 @@ def matProduct(a , b):
 def product(numLayers, lpol, theta, omega):
 
     ## create complex arrays for outputs of matmult steps
+    ## will complete product from right to left:
+    ## lhs begins as identity
+    ## step 1:  lhs * D = t1
+    ## step 2:  t1  * P = t2
+    ## step 3:  t2  * Di = t3
+    ## step 4:  lhs = t3
+    ## step 5:  repeat from step 1 until to nlayers
+
+    lhs = np.identity(2,complex)
+    t1  = np.zeros((2,2),complex)
+    t2  = np.zeros((2,2),complex)
+    t3  = np.zeros((2,2),complex)
     sumproduct = np.zeros((2,2), complex)
-    firstMatrix = np.zeros((2,2), complex)
     for x in range(2, numLayers):
+        ## build the base arrays for the current layer
         d = getD(x)
         n = getN(x)
         dM = dmatrix(n, theta, lpol, x)
         pM = pmatrix(d, n, theta, omega)
         inverseDM = npla.inv(dM)
-        np.dot(pM, inverseDM, firstMatrix)
-        np.dot(dM,firstMatrix,sumproduct)
 
+        ## continue multiplication of previous product by 
+        ## arrays of current layer
+        np.dot(lhs, dM, t1)
+        np.dot(t1, pM, t2)
+        np.dot(t2, inverseDM, t3)
+       
+        ## save running product as lhs for next iteration
+        lhs = t3.copy()
+        #np.dot(pM, inverseDM, firstMatrix)
+        #np.dot(dM,firstMatrix,sumproduct)
+
+    ## copy final product to sumproduct    
+    sumproduct = lhs.copy()
     return sumproduct
 
 
