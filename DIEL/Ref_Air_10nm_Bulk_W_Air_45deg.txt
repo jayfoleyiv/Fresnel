@@ -1,4 +1,9 @@
-# Incident Angle Wavelength  Reflectance 
+# Using Bulk W data set with air above and below
+# Thickness of W layer is 10 nm (0.01 microns)
+# Incident Angle is 45 deg
+# Wavelengths span the entire data set of W date: 400 nm - 6000 nm
+
+# Angle (deg)   Wavelength (nm)  Reflectance  Transmission
   45.0000000000 6000.0000000000  0.7684660233 0.0903745491
   45.0000000000 5979.0700000000  0.7680870154 0.0907352518
   45.0000000000 5958.2800000000  0.7676982190 0.0911044138
