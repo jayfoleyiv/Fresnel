@@ -6,7 +6,7 @@ c = 299792458
 theta = 45 * (cmath.pi) / 180
 lpol = "p"
 #omega = c * (cmath.pi * 2) / (500 * 10 ** -9)
-numLayers = 4
+numLayers = 3
 
 
 arr = np.loadtxt("/Users/jtsatsaros2018/Fresnel/FDTD_TEST/Fresnel/DIEL/W_Bulk_epsilon_vs_Wavelength_in_Meters.txt")
@@ -43,7 +43,7 @@ def getN(diearray , layer, index):
     if (layer == 1):
         return 1 + 0j
     elif (layer == 2):
-        return int(diearray[index][1]) + int(diearray[index][2])*1j
+        return cmath.sqrt(int(diearray[index][1]) + int(diearray[index][2])*1j)
     elif (layer == 3):
         return 1 + 0j
     else:
@@ -129,9 +129,10 @@ def product(numLayers, lpol, angle, omega, a, z):
 
 def main():
     ar = np.array(["wavelength", "reflectance", "transmittance"])
-    for y in arr:
-        wl = y[0]
-        z = 0
+    z = 0
+    for y in range(len(arr)):
+        wl = arr[y][0]
+        om = c * (cmath.pi * 2) / (wl)
 
         ## create complex arrays for outputs of matmult steps
         temp = np.zeros((2, 2), complex)
@@ -141,7 +142,7 @@ def main():
         inverseDM = npla.inv(dM)
 
         # create product of D P D^-1 for all intermediate layers
-        sumproduct = product(numLayers, lpol, theta, wl, arr, z)
+        sumproduct = product(numLayers, lpol, theta, om, arr, z)
         # create D for final layer
         dL = getD(numLayers)
         nL = getN(arr, numLayers, z)
@@ -163,10 +164,12 @@ def main():
 
         T = lt*np.conj(lt) * (getN(arr, numLayers, z)) * cmath.cos(finalAngle) / ((cmath.cos(theta) * getN(arr, 1, z)))
         A = 1 - T - R
-        m = np.array([theta*(180/cmath.pi), R, T])
+        m = np.array([wl, R, T])
         ar = np.vstack((ar,m))
         ar = np.real(ar)
         z +=1
+
+        ans = [A, T, R]
 
   #  for k in range(len(ar)):
    #     for l in range(3):
@@ -184,9 +187,8 @@ def main():
         text_file.write("\n")
     text_file.close()
 
-    return R
+    return ans
 
 
 print(main())
 
-#wavelength  #angle #reflectance transmission
