@@ -2,8 +2,8 @@
 #include<stdlib.h>
 #include<math.h>
 #include<string.h>
-#include<malloc.h>
-#include<complex.h>
+#include</usr/include/malloc/malloc.h>
+#include</usr/include/complex.h>
 
 // Function Prototypes
 int *VEC_INT(int dim);
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
   d = VEC_DOUBLE(Nlayer);
 
   d[0] = 0.;
-  d[1] = 0.4;
+  d[1] = 0.01;
   d[2] = 0.;
 
   //  Vector to store the complex refractive index of each layer
@@ -83,12 +83,11 @@ int main(int argc, char* argv[]) {
 
   //  4-layer structure that mimics a 2-layer structure
   rind[0] = 1.0 + 0.*I;
-  rind[1] = 1.5 + 0.1*I;
+  rind[1] = 3.298 + 2.425*I;
   rind[2] = 1.0 + 0.*I;
 
-
   // Wavelength in nanometers
-  lambda = 500.;
+  lambda = 400.;
 
   // Wavenumber in inverse micrometers
   k0 = 2*pi*1000./lambda;
@@ -99,7 +98,7 @@ int main(int argc, char* argv[]) {
   double Tangle, Trans;
   //  Loop over incident angle and/or wavelength
   fprintf(fp,"# Incident Angle Wavelength  Reflectance \n");
-  for (i=0; i<45; i++) {
+  for (i=45; i<46; i++) {
 
      // Increment incident angle
      thetaI=i*pi/180.;
@@ -203,15 +202,22 @@ double complex *cosL, double *beta, double *alpha, double complex *m11, double c
 
   //  Now get the z-components of the wavevector in each layer
   for (i=0; i<Nlayer; i++) {
+     double complex kmag2 = (rind[i]*k0)*(rind[1]*k0);
+     double complex diff2 = kmag2-kx*kx;
      kz[i] = (rind[i]*k0)*(rind[i]*k0) - kx*kx;
      kz[i] = csqrt(kz[i]);
      // Want to make sure the square root returns the positive imaginary branch
      if (cimag(kz[i])<0.)  {
         kz[i] = creal(kz[i]) - cimag(kz[i]);
      }
-   }
+   printf("  Layer %i\n",i);
+   printf("  k_mag^2 is          %12.10e,%12.10e\n",creal(kmag2),cimag(kmag2));
+   printf("  kx^2    is          %12.10e,%12.10e\n",creal(kx*kx),cimag(kx*kx));
+   printf("  k_mag^2 - kx^2:     %12.10e,%12.10e\n",creal(diff2),cimag(diff2));
+   printf("  sqrt(kmag^2-kx^2):  %12.10e,%12.10e\n",creal(csqrt(diff2)),cimag(csqrt(diff2)));
 
-
+   } 
+  
 
    //  Calculate the P matrix
    for (i=1; i<Nlayer-1; i++) {
@@ -226,8 +232,24 @@ double complex *cosL, double *beta, double *alpha, double complex *m11, double c
      //  lower right (diagonal 2)
      Pl[i*4+3] = cexp(ci*phil[i]);
 
-   }
+   printf("  kz[%i] \n",i);
+   printf("  %12.10e  %12.10e\n",creal(kz[i]),cimag(kz[i]));
 
+   printf("  phil[%i]  \n",i);
+   printf("  %12.10e  %12.10e\n",creal(phil[i]),cimag(phil[i]));
+
+   printf("  -ciphil[%i]  \n",i);
+   printf("  %12.10e  %12.10e\n",creal(-ci*phil[i]),cimag(-ci*phil[i]));
+
+   printf("  ciphil[%i]  \n",1);
+   printf("  %12.10e  %12.10e\n",creal(ci*phil[i]),cimag(ci*phil[i]));
+
+
+   printf("  P(%i) \n",1);
+   printf(" ( %12.10e  %12.10ej ), (%12.10e  %12.10ej) \n",creal(Pl[i*4]),cimag(Pl[i*4]),creal(Pl[i*4+1]),cimag(Pl[i*4+1]));
+   printf(" ( %12.10e  %12.10ej ), (%12.10e  %12.10ej) \n",creal(Pl[i*4+2]),cimag(Pl[i*4+2]),creal(Pl[i*4+3]),cimag(Pl[i*4+3]));
+
+   }
  
    //  Calculate the D and Dinv matrices
    for (i=0; i<Nlayer; i++) {
@@ -269,8 +291,15 @@ double complex *cosL, double *beta, double *alpha, double complex *m11, double c
      Dinv[i*4+2]=-1*tmp*D[i*4+2];
      Dinv[i*4+3]=tmp*D[i*4];
  
-   }
+   printf("  D(%i) \n",i);
+   printf(" ( %12.10e  %12.10ej ), (%12.10e  %12.10ej) \n",creal(D[i*4]),cimag(D[i*4]),creal(D[i*4+1]),cimag(D[i*4+1]));
+   printf(" ( %12.10e  %12.10ej ), (%12.10e  %12.10ej) \n",creal(D[i*4+2]),cimag(D[i*4+2]),creal(D[i*4+3]),cimag(D[i*4+3]));
 
+   printf("  Dinv(%i) \n",i);
+   printf(" ( %12.10e  %12.10ej ), (%12.10e  %12.10ej) \n",creal(Dinv[i*4]),cimag(Dinv[i*4]),creal(Dinv[i*4+1]),cimag(Dinv[i*4+1]));
+   printf(" ( %12.10e  %12.10ej ), (%12.10e  %12.10ej) \n",creal(Dinv[i*4+2]),cimag(Dinv[i*4+2]),creal(Dinv[i*4+3]),cimag(Dinv[i*4+3]));
+
+   }
 
    // Initial EM matrix
    EM[0] = c1;
@@ -285,11 +314,21 @@ double complex *cosL, double *beta, double *alpha, double complex *m11, double c
      for (j=0; j<2; j++) {
        for (k=0; k<2; k++) {
           EM[2*j+k] = tmp2[2*j+k];
+          //printf(" (%12.10e,%12.10ej)",creal(D[2*j+k]),cimag(D[2*j+k]));
+          //printf(" (%12.10e,%12.10ej)",creal(Pl[2*j+k]),cimag(Pl[2*j+k]));
+          //printf(" (%12.10e,%12.10ej)",creal(Dinv[2*j+k]),cimag(Dinv[2*j+k]));
+          //printf(" (%12.10e,%12.10ej)",creal(tmp2[2*j+k]),cimag(tmp2[2*j+k]));
        }
+       printf("\n");
      }
    }
+
    CMatMult2x2(0, EM  , Nlayer-1, D   , 0, tmp2);
    CMatMult2x2(0, Dinv, 0, tmp2, 0, EM); 
+
+   printf("  M(%i) \n",i);
+   printf(" ( %12.10e  %12.10ej ), (%12.10e  %12.10ej) \n",creal(EM[0]),cimag(EM[0]),creal(EM[1]),cimag(EM[1]));
+   printf(" ( %12.10e  %12.10ej ), (%12.10e  %12.10ej) \n",creal(EM[2]),cimag(EM[2]),creal(EM[3]),cimag(EM[3]));
 
 
    //  Finally, collect all the quantities we wish 

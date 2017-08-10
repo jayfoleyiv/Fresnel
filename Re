@@ -1,0 +1,2 @@
+# Incident Angle Wavelength  Reflectance 
+  45.0000000000 400.0000000000  0.2179856498 0.2782823834
