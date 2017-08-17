@@ -18,20 +18,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import export_graphviz
+import time as time
+
+st = time.time()
 
 # Create a dataset
-arr = np.loadtxt("/Users/jtsatsaros2018/Documents/Fresnel/Fresnel/Clustering_Data/TEST_SET_100000.txt")
+arr = np.loadtxt("/home/james/Fresnel/Clustering_Data/TEST_SET_10000_FIXED_BR.txt")
 X = np.array([arr[0][:5]])
 Y = np.array([arr[0][5:]])
 for n in range(1, len(arr)):
     X = np.vstack((X, arr[n][:5]))
     Y = np.vstack((Y, arr[n][5:]))
 
-newarr = np.loadtxt("/Users/jtsatsaros2018/Documents/Fresnel/TEST_SET_320000000.txt")
+newarr = np.loadtxt("/home/james/Fresnel/Clustering_Data/TEST_SET_320000000.txt")
 x_1 = np.array([newarr[4][:5]])
 y_2 = np.array([newarr[4][5:]])
 for n in range(5, len(newarr)):
-    if (newarr[n][:5] not in X ):
+    if (newarr[n][:5] not in X and newarr[n][1] == 9):
         x_1 = np.vstack((x_1, newarr[n][:5]))
         y_2 = np.vstack((y_2, newarr[n][5:]))
 
@@ -56,17 +59,19 @@ for i in range(8):
 #x_1 = np.array([0.0,8,0.18,0.16,1200.0])
 y_1 = regr.predict(x_1)
 
+print("R Squared")
 print(regr.score(x_1,y_2))
-export_graphviz(regr, out_file='tree.dot')
 
+elapsed_time = time.time()-st
+print("Elapsed time: %.2fs" % elapsed_time)
 
-
+export_graphviz(regr, out_file='tree.text')
 with open("tree.txt", "w") as f:
     f = export_graphviz(regr, out_file=f)
 
-"""
+
 #output the results
-text_file = open("/Users/jtsatsaros2018/Documents/test2", "a")
+text_file = open("/home/james/dttest.txt", "a")
 for k in range(len(y_1)):
     for l in range(2):
         n = y_1[k][l]
@@ -78,7 +83,6 @@ for k in range(len(y_1)):
         text_file.write("\t")
     text_file.write("\n")    
 text_file.close()
-"""
 
 # Plot the results
 plt.figure()
@@ -96,3 +100,5 @@ plt.ylabel("target 2")
 plt.title("Multi-output Decision Tree Regression")
 plt.legend(loc="best")
 plt.show()
+
+

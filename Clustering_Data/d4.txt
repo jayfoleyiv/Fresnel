@@ -1,0 +1,3 @@
+R Squared
+1.0
+Elapsed time: 534.99s

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from itertools import cycle
 import time as time
 
-arr = np.loadtxt("/Users/jtsatsaros2018/Documents/Fresnel/Fresnel/Clustering_Data/TEST_SET_100000.txt")
+arr = np.loadtxt("/home/james/Fresnel/Clustering_Data/TEST_SET_320000000.txt")
 st = time.time()
 ms = MeanShift()
 ms.fit(arr)
