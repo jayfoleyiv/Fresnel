@@ -1,0 +1,5 @@
+TRAIN_SET_125.txt    = 243 points
+TRAIN_SET_3125.txt   = 3125 points
+TRAIN_SET_15625.txt  = 7776 points
+TRAIN_SET_78125.txt  = 16807 points
+TRAIN_SET_390625.txt = 32768 points
