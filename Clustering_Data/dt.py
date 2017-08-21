@@ -19,30 +19,28 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import export_graphviz
 import time as time
+import pickle as pickle
 
 st = time.time()
 
 # Create a dataset
-arr = np.loadtxt("/home/james/Fresnel/Clustering_Data/TEST_SET_10000_FIXED_BR.txt")
-X = np.array([arr[0][:5]])
-Y = np.array([arr[0][5:]])
-for n in range(1, len(arr)):
-    X = np.vstack((X, arr[n][:5]))
-    Y = np.vstack((Y, arr[n][5:]))
+X = np.loadtxt("/home/james/Fresnel/Clustering_Data/TRAIN_32768.txt", usecols=(0,1,2,3,4))
+Y = np.loadtxt("/home/james/Fresnel/Clustering_Data/TRAIN_32768.txt", usecols=(5,6))
 
-newarr = np.loadtxt("/home/james/Fresnel/Clustering_Data/TEST_SET_320000000.txt")
-x_1 = np.array([newarr[4][:5]])
-y_2 = np.array([newarr[4][5:]])
-for n in range(5, len(newarr)):
-    if (newarr[n][:5] not in X and newarr[n][1] == 9):
-        x_1 = np.vstack((x_1, newarr[n][:5]))
-        y_2 = np.vstack((y_2, newarr[n][5:]))
+x_1 = np.loadtxt("/home/james/Fresnel/Clustering_Data/TEST_SET_3200K_Stop.txt", usecols=(0,1,2,3,4))
+y_2 = np.loadtxt("/home/james/Fresnel/Clustering_Data/TEST_SET_3200K_Stop.txt", usecols=(5,6))
 
+
+loadtime = time.time()
+print("load time")
+print(loadtime - st)
 
 # Fit regression model
-regr = DecisionTreeRegressor()
+rt = time.time()
+regr = DecisionTreeRegressor(max_depth=2, min_samples_split = 2,min_samples_leaf=1)
 regr.fit(X, Y)
-
+print("time to do regression")
+print(time.time()-rt)
 
 # Predict
 """
@@ -57,21 +55,48 @@ for i in range(8):
     x_1 = np.vstack((x_1,[a[i],b[i],c[i],d[i],e[i]]))
 """
 #x_1 = np.array([0.0,8,0.18,0.16,1200.0])
-y_1 = regr.predict(x_1)
 
+
+pt = time.time()
+y_1 = regr.predict(x_1)
+print("time to predict")
+print(time.time() - pt)
+
+"""
+pdt = time.time()
+with open("regression1.pkl", 'wb') as f:
+    pickle.dump(regr, f, pickle.HIGHEST_PROTOCOL)
+
+print("pickle dump")
+print(time.time()-pdt)
+"""
+
+
+#output results
 print("R Squared")
 print(regr.score(x_1,y_2))
+
+"""
+ervector = np.fabs(y_1 - y_2)/y_2
+vecte = ervector[0][0]
+vectd = ervector[0][1]
+for l in range(1, len(ervector)):
+    vecte = np.vstack((vecte, ervector[l][0]))
+    vectd = np.vstack((vectd, ervector[l][1]))
+
+er =  np.linalg.norm(vecte) + np.linalg.norm(vectd)
+
+print("Error")
+print(er)
 
 elapsed_time = time.time()-st
 print("Elapsed time: %.2fs" % elapsed_time)
 
-export_graphviz(regr, out_file='tree.text')
-with open("tree.txt", "w") as f:
+export_graphviz(regr, out_file='rtree1.text')
+with open("rtree1.txt", "w") as f:
     f = export_graphviz(regr, out_file=f)
 
-
-#output the results
-text_file = open("/home/james/dttest.txt", "a")
+text_file = open("/home/james/rtree_test.txt", "a")
 for k in range(len(y_1)):
     for l in range(2):
         n = y_1[k][l]
@@ -100,5 +125,7 @@ plt.ylabel("target 2")
 plt.title("Multi-output Decision Tree Regression")
 plt.legend(loc="best")
 plt.show()
-
+"""
+print("total time")
+print(time.time()-st)
 
