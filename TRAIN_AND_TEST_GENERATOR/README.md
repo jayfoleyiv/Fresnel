@@ -1,0 +1,2 @@
+- Contains c-code that varies over geometric and material parameters and computes figures of merits
+- Can be used to create both test and training data sets
