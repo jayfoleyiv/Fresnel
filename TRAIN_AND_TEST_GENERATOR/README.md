@@ -8,3 +8,5 @@
 - To run and save output to a textfile called "Test.txt", type:
 
 `./Train.exe input.txt > Test.txt &`
+
+- input.txt need not be modified unless you are interested in changing lambda_bg for the PV
