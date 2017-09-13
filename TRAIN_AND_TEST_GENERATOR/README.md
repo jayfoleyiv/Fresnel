@@ -4,5 +4,6 @@
 - To compile, type
 `g++ -o Train.exe Train.c -O3`
 
-- To run and save output to a textfile called `Test.txt`
+- To run and save output to a textfile called `Test.txt`, type:
+
 `./Train.exe input.txt > Test.txt &`
