@@ -32,10 +32,12 @@ int main(int argc, char* argv[]) {
   int i, j, k, F1, F2, TK, NI, NV;
   // complex double precision variables
   double complex m11, m21, r, t, st, cosL;
-  double complex *rind, nlow, nhi;
-  double complex *sio2_rind, *tio2_rind, *w_sub, *w_ald, *alumina_ald;
+  double complex *rind, nlow, nhi, eps_metal;
+  double eps_real, eps_imag;
   double PU;
 
+  // Drude + 2L parameters
+  double *d2l;
   double h=6.626e-34;
   double kb = 1.38064852e-23;
   double rho;
@@ -54,7 +56,7 @@ int main(int argc, char* argv[]) {
   // Variables for Spectral Efficiency
   double Temp, lbg;
   // This is intentionally larger than number of wavelength values in data files
-  int NumLam=10000;
+  int NumLam=4000;
 
 
   //  Allocate arrays for spectral efficiency
@@ -62,49 +64,14 @@ int main(int argc, char* argv[]) {
   Emiss   = VEC_DOUBLE(NumLam);
   clam    = VEC_DOUBLE(NumLam);
 
-  //   Metal epsilon array
-  sio2_rind   = VEC_CDOUBLE(NumLam);
-  tio2_rind   = VEC_CDOUBLE(NumLam);
-  w_sub       = VEC_CDOUBLE(NumLam);
-  w_ald       = VEC_CDOUBLE(NumLam);
-  alumina_ald = VEC_CDOUBLE(NumLam);
-
   FILE *fp;
 
   // Character string(s)
-  char *write, *line, *sio2file, *tio2file, *w_sub_file, *w_ald_file, *alumina_ald_file;
+  char *write, *line;
 
   write   = VEC_CHAR(1000);
   line    = VEC_CHAR(1000);
-  sio2file = VEC_CHAR(1000);
-  tio2file = VEC_CHAR(1000);
-  w_sub_file = VEC_CHAR(1000);
-  w_ald_file = VEC_CHAR(1000);
-  alumina_ald_file = VEC_CHAR(1000);
-  strcpy(sio2file,"DIEL/sio2_cspline.txt");
-  strcpy(tio2file,"DIEL/tio2_cspline.txt");
-  strcpy(w_sub_file,"DIEL/W_Palik.txt");
-  strcpy(w_ald_file,"DIEL/w_ald_cspline.txt");
-  strcpy(alumina_ald_file,"DIEL/ald_al2o3_cspline.txt");
-  int CheckNum;
-  // How many data points are in the file W_Palik.txt?  This function  will tell us
-  // Substrate W data - dielectric function
-  NumLam =   ReadDielectric(w_sub_file, LamList, w_sub);
-  // BR data - refractive index data from vendor
-  CheckNum = ReadDielectric(sio2file, clam, sio2_rind);
-  CheckNum = ReadDielectric(tio2file, clam, tio2_rind); 
-  // W data - refractive index from ALD sample 
-  CheckNum = ReadDielectric(w_ald_file, clam, w_ald);
-  // Alumina ata - refractive index from ALD sample
-  CheckNum = ReadDielectric(alumina_ald_file, clam, alumina_ald);  
 
-  printf("#  Read from files!\n");   
-  printf("#  Read %i entries from file %s\n",NumLam,w_sub_file);
-  printf("#  Read %i entries from file %s\n",CheckNum,sio2file);
-  printf("#  Read %i entries from file %s\n",CheckNum,tio2file);
-  printf("#  Read %i entries from file %s\n",CheckNum,w_ald_file);
-  printf("#  Read %i entries from file %s\n",CheckNum,alumina_ald_file);
-  fflush(stdout);
   //  Did we pass a filename to the program?
   if (argc==1) {
     exit(0);
@@ -256,30 +223,19 @@ int main(int argc, char* argv[]) {
          thetaI = 0;
  
          for (i=0; i<NumLam; i++) {
- 
+
+           lambda = 400e-9 + i*2e-9; 
            lambda = LamList[i];    // Lambda in meters
            k0 = 2*pi*1e-6/lambda;  // k0 in inverse microns - verified
            w=2*pi*c/lambda;        // angular frequency 
  
-           epsbg = creal(alumina_ald[i]*alumina_ald[i]);
-           //double complex epsald  = w_ald[i]*w_ald[i]; 
-           double complex epsald = w_sub[i];
-
-           // now start the PC
-           /*for (j=2; j<Nlayer-3; j++) {
-
-             if (j%2==0) {
-               rind[j] = sio2_rind[i];
-             }
-             else {
-               rind[j] = tio2_rind[i];
-             }
-           }
-           */
-
-
+           
            //w_ald[i]*w_ald[i];
            // Alloy superstrate Layer (Layer 1 in the structure [Layer 0 is air!])
+void Lorentz(double *params, double w, double *epsreal, double *epsimag)
+           Lorentz(d2l, w, &eps_real, &eps_imag);
+           eps_metal = eps_real + I*eps_imag;
+
            MaxwellGarnett(vf1, epsbg, epsald, &eta, &kappa);
 
            //Bruggenman(vf1,epsbg, epsald, &eta, &kappa);
@@ -679,19 +635,32 @@ void MaxwellGarnett(double f, double epsD, double complex epsM, double *eta, dou
 
 //  Evaluates real and imaginary part of refractive index from 
 //  the Lorent oscillator model given omega_0, gamma_0, and omega
-void Lorentz(double we, double de, double w, double *nreal, double *nimag) {
+void Lorentz(double *params, double w, double *epsreal, double *epsimag) {
+
+  double epsinf, ampD, gammaD, ampL1, ampL2, omL1, omL2, gammaL1, gammaL2;
+  epsinf  = params[0];
+  ampD    = params[1];
+  gammaD  = params[2];
+  ampL1   = params[3];
+  omL1    = params[4];
+  gammaL1 = params[5];
+  ampL2   = params[6];
+  omL2    = params[7];
+  gammaL2 = params[8];  
 
   double complex epsilon;
-  double complex n;
 
-  
-  epsilon = 1 + pow(we,2)/(pow(we,2) - 2*I*de*w - pow(w,2));
+  // Drude
+  epsilon =  epsinf -  ampD/(w*w + I*gammaD*w);
+  // Lorentz1
+  epsilon += ampL1/((omL1*omL1-w*w) - I*gammaL1*w);
+  // Lorentz2
+  epsilon += ampL2/((omL2*omL2-w*w) - I*gammaL2*w);
 
   //printf("  w:  %12.10e  we:  %12.10f  de:  %12.10f  epsr:  %12.10f  epsi:  %12.10f\n",w,we,de,creal(epsilon),cimag(epsilon));
-  n = csqrt(epsilon);
 
-  *nreal = creal(n);
-  *nimag = cimag(n);
+  *epsreal = creal(epsilon);
+  *epsimag = cimag(epsilon);
 
 }
 
