@@ -22,3 +22,8 @@ c Lorentz 1 :
 c Lorentz 2 :
 
         cc = cc + ampL/( (omL^2 - om2) - ri gammaL om )
+        
+TO DO:
+- Code in way to read D2L parameters from file
+- Validate the D2L function is working (reproduces the fit)
+- Post results to github
