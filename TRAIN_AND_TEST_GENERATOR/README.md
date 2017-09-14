@@ -12,8 +12,13 @@
 - input.txt need not be modified unless you are interested in changing lambda_bg for the PV
 
 c Drude :
-       cc=epsinf - ampD/(om2 + ri*gammaD*om)
+
+       cc=epsinf - ampD/(om2 + ri   gammaD om)
+       
 c Lorentz 1 :
-        cc = cc + ampL/( (omL**2 - om2) - ri*gammaL*om )
+
+        cc = cc + ampL/( (omL^2 - om2) - ri gammaL om )
+        
 c Lorentz 2 :
-        cc = cc + ampL/( (omL**2 - om2) - ri*gammaL*om )
+
+        cc = cc + ampL/( (omL^2 - om2) - ri gammaL om )
