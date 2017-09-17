@@ -17,7 +17,8 @@ double complex *cosL, double *beta, double *alpha, double complex *m11, double c
 double SpectralEfficiency(double *emissivity, int N, double *lambda, double lambdabg, double Temperature, double *P);
 void Bruggenman(double f, double epsD, double complex epsM, double *eta, double *kappa);
 void MaxwellGarnett(double f, double epsD, double complex epsM, double *eta, double *kappa);
-void Lorentz(double we, double de, double w, double *epsr, double *epsi);
+//void Lorentz(double we, double de, double w, double *epsr, double *epsi);
+void Lorentz(double *params, double w, double *epsreal, double *epsimag);
 int ReadDielectric(char *file, double *lambda, double complex *epsM);
 int IsDominated(int idx, int LENGTH, double *O1,double *O2);
 void ReadBRRind(int numBR, double lambda, double *BRlambda, double complex *BRind, double *n, double *k); 
@@ -26,7 +27,7 @@ int Nlayer;
 int polflag;
 double c = 299792458;
 double pi=3.141592653589793;
-
+double hbarev = 6.582119e-16;
 int main(int argc, char* argv[]) {
   // integer variables
   int i, j, k, F1, F2, TK, NI, NV;
@@ -38,6 +39,7 @@ int main(int argc, char* argv[]) {
 
   // Drude + 2L parameters
   double *d2l;
+
   double h=6.626e-34;
   double kb = 1.38064852e-23;
   double rho;
@@ -57,6 +59,8 @@ int main(int argc, char* argv[]) {
   double Temp, lbg;
   // This is intentionally larger than number of wavelength values in data files
   int NumLam=4000;
+  // Number of variations to try
+  int numVars;
 
 
   //  Allocate arrays for spectral efficiency
@@ -80,16 +84,11 @@ int main(int argc, char* argv[]) {
   strcpy(write,argv[1]);
 
   // initialize variables to be read
-  Nlayer=0;
-  d1=0.0;
-  d2=0.0;
   nlow=0.;
   nhi=0.;
-  vf1=0.0;
-  vf2=0.0;
-  epsbg=0.0;
-  d3=0.0;
-  d4=0.0;
+  epsbg=3.097;
+  d3=0.01;
+  d4=0.9;
   lbg=0.0;
   Temp=0.0;
   // Open the file for writing!
@@ -97,27 +96,15 @@ int main(int argc, char* argv[]) {
   printf("  going to read from file %s\n",write);
   fflush(stdout);
  
-  
-    fscanf(fp,"%s",line);  // Nlayer
-    fscanf(fp,"%i",&Nlayer);
+
+    fscanf(fp,"%s",line);  // Number_of_variations
+    fscanf(fp,"%i",&numVars);  
     fscanf(fp,"%s",line);   // dalloy
     fscanf(fp,"%lf",&dalloy);
-    fscanf(fp,"%s",line);   //  d1
-    fscanf(fp,"%lf",&d1);
     fscanf(fp,"%s",line);  //  nlow
     fscanf(fp,"%lf",&nlow);
-    fscanf(fp,"%s",line);  // d2
-    fscanf(fp,"%lf",&d2);
     fscanf(fp,"%s",line);  // nhi
     fscanf(fp,"%lf",&nhi);
-    fscanf(fp,"%s",line);  // d3 (spacer)
-    fscanf(fp,"%lf",&d3);
-    fscanf(fp,"%s",line);  // d4 (W/alloy underlayer)
-    fscanf(fp,"%lf",&d4);
-    fscanf(fp,"%s",line);  // volume fraction 1
-    fscanf(fp,"%lf",&vf1); 
-    fscanf(fp,"%s",line);  // volume fraction 2
-    fscanf(fp,"%lf",&vf2); 
     fscanf(fp,"%s",line);  // epsbg
     fscanf(fp,"%lf",&epsbg);
     fscanf(fp,"%s",line);  // Temp
@@ -131,11 +118,13 @@ int main(int argc, char* argv[]) {
   int numVf, numNlayers, numFac, *NLa, *PF, numT;
   double *VFa, *SEA, *SFAC, *SDA, *Tem;
   
-  numNlayers=3;
-  numFac=3;
-  numVf = 3;
-  numT  = 3;
+  numNlayers=numVars;
+  numFac=numVars;
+  numVf = numVars;
+  numT  = numVars;
 
+  // d2l parameters should have (9*number_of_variations) elements in general
+  d2l = (double *)malloc((numVars*9)*sizeof(double));
   NLa = (int*)malloc((numNlayers*sizeof(int)));
   SEA = (double*)malloc((numT*numFac*numVf*numNlayers*numFac*sizeof(double)));
   SDA = (double*)malloc((numT*numFac*numVf*numNlayers*numFac*sizeof(double)));
@@ -143,6 +132,17 @@ int main(int argc, char* argv[]) {
   SFAC= (double*)malloc((numFac*sizeof(double)));
   VFa = (double*)malloc((numVf*sizeof(double)));
   Tem = (double*)malloc(numT*sizeof(double));
+
+  // Parameters for Chromium
+  d2l[0] = 0.221474E+01;
+  d2l[1] = 0.261386E+02;
+  d2l[2] = 0.957129E-01;
+  d2l[3] = 0.392081E+01;
+  d2l[4] = 0.585496E+00;
+  d2l[5] = 0.314290E+00;
+  d2l[6] = 0.173123E+03;
+  d2l[7] = 0.186294E+01;
+  d2l[8] = 0.282379E+01;
 
   d = VEC_DOUBLE(1000);
   rind = VEC_CDOUBLE(1000);
@@ -221,32 +221,33 @@ int main(int argc, char* argv[]) {
    
          // Normal incidence
          thetaI = 0;
- 
+         FILE *lfp;
+         lfp = fopen("Lorentz_Test.txt","w");
          for (i=0; i<NumLam; i++) {
 
            lambda = 400e-9 + i*2e-9; 
-           lambda = LamList[i];    // Lambda in meters
+           LamList[i] = lambda;    // Lambda in meters
            k0 = 2*pi*1e-6/lambda;  // k0 in inverse microns - verified
            w=2*pi*c/lambda;        // angular frequency 
  
            
            //w_ald[i]*w_ald[i];
            // Alloy superstrate Layer (Layer 1 in the structure [Layer 0 is air!])
-void Lorentz(double *params, double w, double *epsreal, double *epsimag)
-           Lorentz(d2l, w, &eps_real, &eps_imag);
+           Lorentz(d2l, w*hbarev, &eps_real, &eps_imag);
+           fprintf(lfp,"%12.10f  %12.10f  %12.10f\n",lambda*1e9,eps_real,eps_imag); 
            eps_metal = eps_real + I*eps_imag;
 
-           MaxwellGarnett(vf1, epsbg, epsald, &eta, &kappa);
+           MaxwellGarnett(vf1, epsbg, eps_metal, &eta, &kappa);
 
            //Bruggenman(vf1,epsbg, epsald, &eta, &kappa);
            rind[1] = eta + I*kappa; 
 
 
            // Alumina layer
-           rind[Nlayer-3] = alumina_ald[i];
+           rind[Nlayer-3] = sqrt(epsbg);
 
            // W substrate layer (Layer N-2 in the structure [layer N-1 is air!])
-           MaxwellGarnett(1.0, epsbg, w_sub[i], &eta, &kappa);
+           MaxwellGarnett(1.0, epsbg, eps_metal, &eta, &kappa);
            rind[Nlayer-2] = eta + I*kappa;
  
            // Solve the Transfer Matrix Equations
@@ -648,6 +649,9 @@ void Lorentz(double *params, double w, double *epsreal, double *epsimag) {
   omL2    = params[7];
   gammaL2 = params[8];  
 
+  printf("  epsinf %12.10f\n",epsinf);
+  printf("  gammaD %12.10f\n",gammaD);
+  printf("  w      %12.10f\n",w);  
   double complex epsilon;
 
   // Drude

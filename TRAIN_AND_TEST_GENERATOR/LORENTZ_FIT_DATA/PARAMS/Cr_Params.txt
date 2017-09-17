@@ -1,0 +1,4 @@
+Drude epsinf,ampD,gammaD   0.221474E+01  0.261386E+02  0.957129E-01
+ Loren ampL,omL,gammaL     0.392081D+01  0.585496D+00  0.314290D+00
+ Loren ampL,omL,gammaL     0.173123D+03  0.186294D+01  0.282379D+01
+

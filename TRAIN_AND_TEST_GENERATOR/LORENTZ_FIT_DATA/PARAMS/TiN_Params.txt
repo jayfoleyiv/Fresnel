@@ -1,0 +1,3 @@
+ Drude epsinf,ampD,gammaD   0.100000E-02  0.871435E+01  0.192659E-18
+ Loren ampL,omL,gammaL      0.400000D+02  0.474524D+00  0.108659D+01
+ Loren ampL,omL,gammaL      0.423966D+02  0.374997D+01  0.114691D+01
