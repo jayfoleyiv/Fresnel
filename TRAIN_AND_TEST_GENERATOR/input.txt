@@ -1,4 +1,4 @@
-number_of_variations  1
+number_of_variations  8
 dalloy                0.020
 n1                    1.45
 n2                    2.1

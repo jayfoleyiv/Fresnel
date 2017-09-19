@@ -2,9 +2,8 @@
 #include<stdlib.h>
 #include<math.h>
 #include<string.h>
-#include<malloc.h>
-#include"memory.h"
-#include<complex.h>
+#include</usr/include/malloc/malloc.h>
+#include</usr/include/complex.h>
 
 // Function Prototypes
 int *VEC_INT(int dim);
@@ -18,7 +17,7 @@ double SpectralEfficiency(double *emissivity, int N, double *lambda, double lamb
 void Bruggenman(double f, double epsD, double complex epsM, double *eta, double *kappa);
 void MaxwellGarnett(double f, double epsD, double complex epsM, double *eta, double *kappa);
 //void Lorentz(double we, double de, double w, double *epsr, double *epsi);
-void Lorentz(double *params, double w, double *epsreal, double *epsimag);
+void Lorentz(int num, double *params, double w, double *epsreal, double *epsimag);
 int ReadDielectric(char *file, double *lambda, double complex *epsM);
 int IsDominated(int idx, int LENGTH, double *O1,double *O2);
 void ReadBRRind(int numBR, double lambda, double *BRlambda, double complex *BRind, double *n, double *k); 
@@ -33,13 +32,12 @@ int main(int argc, char* argv[]) {
   int i, j, k, F1, F2, TK, NI, NV;
   // complex double precision variables
   double complex m11, m21, r, t, st, cosL;
-  double complex *rind, nlow, nhi, eps_metal;
-  double eps_real, eps_imag;
+  double complex *rind, eps_metal;
+  double eps_real, eps_imag, nlow, nhi;
   double PU;
 
   // Drude + 2L parameters
   double *d2l;
-
   double h=6.626e-34;
   double kb = 1.38064852e-23;
   double rho;
@@ -68,7 +66,7 @@ int main(int argc, char* argv[]) {
   Emiss   = VEC_DOUBLE(NumLam);
   clam    = VEC_DOUBLE(NumLam);
 
-  FILE *fp;
+  FILE *fp, *pfp;
 
   // Character string(s)
   char *write, *line;
@@ -115,6 +113,12 @@ int main(int argc, char* argv[]) {
     printf("  JUST READ THAT D1 is %f and D2 is %f\n",d1,d2);
   polflag=1;
 
+  if (numVars>7) {
+
+    printf("  currently numVars is limited to 7, reducing to 7!\n");
+    numVars=7;
+
+  }
   int numVf, numNlayers, numFac, *NLa, *PF, numT;
   double *VFa, *SEA, *SFAC, *SDA, *Tem;
   
@@ -133,20 +137,25 @@ int main(int argc, char* argv[]) {
   VFa = (double*)malloc((numVf*sizeof(double)));
   Tem = (double*)malloc(numT*sizeof(double));
 
-  // Parameters for Chromium
-  d2l[0] = 0.221474E+01;
-  d2l[1] = 0.261386E+02;
-  d2l[2] = 0.957129E-01;
-  d2l[3] = 0.392081E+01;
-  d2l[4] = 0.585496E+00;
-  d2l[5] = 0.314290E+00;
-  d2l[6] = 0.173123E+03;
-  d2l[7] = 0.186294E+01;
-  d2l[8] = 0.282379E+01;
+  pfp = fopen("PARAMS.txt","r");
+  double pval;
+  for (i=0; i<numVars; i++) {
+
+    for (j=0; j<9; j++) {
+
+      fscanf(pfp,"%lf",&pval);
+      d2l[i*9+j] = pval;
+      printf("  %12.10e\n",d2l[i*9+j]);
+    }
+  }
+        
+
 
   d = VEC_DOUBLE(1000);
   rind = VEC_CDOUBLE(1000);
 
+  // ML inrements through the various materials
+  for (int ML=0; ML<numVars; ML++) {
   printf("  vf        NL d1        d2        Temp         SE                SD\n");
   for (int TI=0; TI<numT; TI++) {
 
@@ -172,7 +181,7 @@ int main(int argc, char* argv[]) {
         //fac2 = 0.71123+(1./20)*F2;
         //  Loop over different number of layers
         for (NI=0; NI<numNlayers; NI++) { 
-        //for (NI=0; NI<1; NI++) {
+        //for (NI=0; NI<1; NI++) 
 
           Nlayer = 7 + NI;
           //Nlayer = 9;
@@ -221,8 +230,6 @@ int main(int argc, char* argv[]) {
    
          // Normal incidence
          thetaI = 0;
-         FILE *lfp;
-         lfp = fopen("Lorentz_Test.txt","w");
          for (i=0; i<NumLam; i++) {
 
            lambda = 400e-9 + i*2e-9; 
@@ -233,8 +240,7 @@ int main(int argc, char* argv[]) {
            
            //w_ald[i]*w_ald[i];
            // Alloy superstrate Layer (Layer 1 in the structure [Layer 0 is air!])
-           Lorentz(d2l, w*hbarev, &eps_real, &eps_imag);
-           fprintf(lfp,"%12.10f  %12.10f  %12.10f\n",lambda*1e9,eps_real,eps_imag); 
+           Lorentz(ML*numVars, d2l, w*hbarev, &eps_real, &eps_imag);
            eps_metal = eps_real + I*eps_imag;
 
            MaxwellGarnett(vf1, epsbg, eps_metal, &eta, &kappa);
@@ -288,7 +294,12 @@ int main(int argc, char* argv[]) {
    }
  }
  }
+ }
+ return 0;
 
+ }
+ 
+ /*
   FILE *pf;
   pf = fopen("Pareto_18_BruggenmanAlloy_Vendor_BR_Temp.txt","w");
   int id;
@@ -320,12 +331,12 @@ int main(int argc, char* argv[]) {
   }
   }
   }
-fclose(fp);
-fclose(pf);
+  
+
 return 0;
 
 }
-
+*/
 
 // Functions
 int *VEC_INT(int dim){
@@ -532,40 +543,6 @@ void CMatMult2x2(int Aidx, double complex *A, int Bidx, double complex *B, int C
 
 }
 
-double EvaluateMaterial(double *d, double complex *rind, double lambda_low, double lambda_hi, int numLambda, double lambda_bg) {
-
-  int i, j;
-  double k0, thetaI, beta, alpha, dLambda;
-  double complex cosL, m11, m21, r, t;
-  double R, T, A;
-
-  double *lambda, *emissivity;
-
-  lambda      = VEC_DOUBLE(numLambda);
-  emissivity  = VEC_DOUBLE(numLambda);
-
-  dLambda = (lambda_hi-lambda_low)/numLambda;
-  thetaI = 0.;
-
-  for (i=0; i<numLambda; i++) {
-
-    lambda[i] = lambda_low+i*dLambda;
-    // wavenumber
-    k0 = 1000./lambda[i];
-    // solve transfer matrix equations
-    TransferMatrix(thetaI, k0, rind, d, &cosL, &beta, &alpha, &m11, &m21);
-    // Definition of reflection amplitude
-    r = m21/m11;
-    // Fresnel transmission coefficient (also complex if there are absorbing layers)
-    t = 1./m11;
-    R = creal(r*conj(r));
-    T = creal(rind[Nlayer]*cosL/(rind[0]*cos(thetaI))*t*conj(t));
-
-    
-  }
-  free(lambda);
-  free(emissivity);
-}
 double SpectralEfficiency(double *emissivity, int N, double *lambda, double lbg, double T, double *P){
     int i;
     double dlambda, sumD, sumN;
@@ -636,22 +613,19 @@ void MaxwellGarnett(double f, double epsD, double complex epsM, double *eta, dou
 
 //  Evaluates real and imaginary part of refractive index from 
 //  the Lorent oscillator model given omega_0, gamma_0, and omega
-void Lorentz(double *params, double w, double *epsreal, double *epsimag) {
+void Lorentz(int num, double *params, double w, double *epsreal, double *epsimag) {
 
   double epsinf, ampD, gammaD, ampL1, ampL2, omL1, omL2, gammaL1, gammaL2;
-  epsinf  = params[0];
-  ampD    = params[1];
-  gammaD  = params[2];
-  ampL1   = params[3];
-  omL1    = params[4];
-  gammaL1 = params[5];
-  ampL2   = params[6];
-  omL2    = params[7];
-  gammaL2 = params[8];  
+  epsinf  = params[num+0];
+  ampD    = params[num+1];
+  gammaD  = params[num+2];
+  ampL1   = params[num+3];
+  omL1    = params[num+4];
+  gammaL1 = params[num+5];
+  ampL2   = params[num+6];
+  omL2    = params[num+7];
+  gammaL2 = params[num+8];  
 
-  printf("  epsinf %12.10f\n",epsinf);
-  printf("  gammaD %12.10f\n",gammaD);
-  printf("  w      %12.10f\n",w);  
   double complex epsilon;
 
   // Drude
