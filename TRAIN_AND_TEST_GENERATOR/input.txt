@@ -1,7 +1,6 @@
-number_of_variations  8
+number_of_variations  3
 dalloy                0.020
 n1                    1.45
 n2                    2.1
 EpsilonBackground     3.097
-Temperature           1700
 LambdaBG              2254e-9

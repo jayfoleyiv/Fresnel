@@ -9,7 +9,21 @@
 
 `./Train.exe input.txt > Test.txt &`
 
-- input.txt need not be modified unless you are interested in changing lambda_bg for the PV
+- Features that can be modified in input.txt:
+
+-- number_of_variations:  Basically how many different values of a particular feature will be tried.  
+   Note that currently the code will go sequentially through a list of Drude-Lorentz parameters fit to 
+   the permittivity of different materials, and will try number_of_variations different materials.  
+   For example, if number_of_variations is 2, then Cr and Pd will be tried.  
+
+-- n1 and n2 - These will define the refractive indices of the materials that make up the Bragg Reflector
+
+- Additional features *can* be modified, but one should think carefully before doing so!
+
+- Currently the file "Test.txt" contains the output from running the program with number_of_variations = 3, so Cr, Pd, and Pt are considered at
+  along with all possible combinations of 3 different values of d1, d2, Temp, volume fraction, and number of layers in the Bragg reflector 
+
+- About the Drude + 2 Lorentz Permittivity model:
 
 c Drude :
 
@@ -23,10 +37,6 @@ c Lorentz 2 :
 
         cc = cc + ampL/( (omL^2 - om2) - ri gammaL om )
         
-TO DO:
-- Code in way to read D2L parameters from file
-- Validate the D2L function is working (reproduces the fit)
-- Post results to github
 
 PARAMS:
 Cr

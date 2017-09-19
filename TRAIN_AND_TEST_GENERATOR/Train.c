@@ -85,32 +85,29 @@ int main(int argc, char* argv[]) {
   nlow=0.;
   nhi=0.;
   epsbg=3.097;
+  d1 = 0.180;
+  d2 = 0.120;
   d3=0.01;
   d4=0.9;
   lbg=0.0;
   Temp=0.0;
   // Open the file for writing!
   fp = fopen(write,"r");
-  printf("  going to read from file %s\n",write);
-  fflush(stdout);
  
 
-    fscanf(fp,"%s",line);  // Number_of_variations
-    fscanf(fp,"%i",&numVars);  
-    fscanf(fp,"%s",line);   // dalloy
-    fscanf(fp,"%lf",&dalloy);
-    fscanf(fp,"%s",line);  //  nlow
-    fscanf(fp,"%lf",&nlow);
-    fscanf(fp,"%s",line);  // nhi
-    fscanf(fp,"%lf",&nhi);
-    fscanf(fp,"%s",line);  // epsbg
-    fscanf(fp,"%lf",&epsbg);
-    fscanf(fp,"%s",line);  // Temp
-    fscanf(fp,"%lf",&Temp);  
-    fscanf(fp,"%s",line);  //Lambda bg
-    fscanf(fp,"%lf",&lbg);
+  fscanf(fp,"%s",line);  // Number_of_variations
+  fscanf(fp,"%i",&numVars);  
+  fscanf(fp,"%s",line);   // dalloy
+  fscanf(fp,"%lf",&dalloy);
+  fscanf(fp,"%s",line);  //  nlow
+  fscanf(fp,"%lf",&nlow);
+  fscanf(fp,"%s",line);  // nhi
+  fscanf(fp,"%lf",&nhi);
+  fscanf(fp,"%s",line);  // epsbg
+  fscanf(fp,"%lf",&epsbg);
+  fscanf(fp,"%s",line);  //Lambda bg
+  fscanf(fp,"%lf",&lbg);
     
-    printf("  JUST READ THAT D1 is %f and D2 is %f\n",d1,d2);
   polflag=1;
 
   if (numVars>7) {
@@ -119,6 +116,7 @@ int main(int argc, char* argv[]) {
     numVars=7;
 
   }
+
   int numVf, numNlayers, numFac, *NLa, *PF, numT;
   double *VFa, *SEA, *SFAC, *SDA, *Tem;
   
@@ -145,159 +143,182 @@ int main(int argc, char* argv[]) {
 
       fscanf(pfp,"%lf",&pval);
       d2l[i*9+j] = pval;
-      printf("  %12.10e\n",d2l[i*9+j]);
     }
   }
         
 
 
+
   d = VEC_DOUBLE(1000);
   rind = VEC_CDOUBLE(1000);
+  char *type;
+  type = (char *)malloc(1000*sizeof(char));
+
+  printf("  Type  epsinf       ampD          gammaD        ampL1         omL1          gammaL1       ampL2         omL2          gammaL2       NL vf            d1            d2            Temp         SE                SD\n");
 
   // ML inrements through the various materials
   for (int ML=0; ML<numVars; ML++) {
-  printf("  vf        NL d1        d2        Temp         SE                SD\n");
-  for (int TI=0; TI<numT; TI++) {
+ 
+    if (ML==0) strcpy(type,"Cr");
+    else if (ML==1) strcpy(type,"Pd");
+    else if (ML==2) strcpy(type,"Pt");
+    else if (ML==3) strcpy(type,"Rh");
+    else if (ML==4) strcpy(type,"Ta");
+    else if (ML==5) strcpy(type,"V");
+    else if (ML==6) strcpy(type,"W");
+    else {
 
-  Temp = 1200+(1000/17.)*TI;
-  //Temp = 1207.123+(1320/17.)*TI;
-  Tem[TI] = Temp;
-  for (TK=0; TK<numVf; TK++) {
+      printf("  not a valid type!\n");
+      exit(0);
+    }
+    for (int TI=0; TI<numT; TI++) {
 
-    //0.10122+(1./20)*TK;
-    vf1 = 0. + (1./20)*TK;
-    VFa[TK] = vf1;
+      Temp = 1200+(1000/17.)*TI;
+      //Temp = 1207.123+(1320/17.)*TI;
+      Tem[TI] = Temp;
+
+      for (TK=0; TK<numVf; TK++) {
+
+        //0.10122+(1./20)*TK;
+        vf1 = 0. + (1./20)*TK;
+        VFa[TK] = vf1;
   
-    // Loop over different factors to multiply d1 by
-    for (F1=0; F1<numFac; F1++) {
+        // Loop over different factors to multiply d1 by
+        for (F1=0; F1<numFac; F1++) {
 
-      fac1 = 0.6 + (1./20)*F1;   
-      //fac1 = 0.55322+(1./20)*F1;
-      SFAC[F1] = fac1;
-      // Loop over different factors to multiply d2 by
-      for (F2=0; F2<numFac; F2++) {
+          fac1 = 0.6 + (1./20)*F1;   
+          //fac1 = 0.55322+(1./20)*F1;
+          SFAC[F1] = fac1;
 
-        fac2 = 0.6 + (1./20)*F2;
-        //fac2 = 0.71123+(1./20)*F2;
-        //  Loop over different number of layers
-        for (NI=0; NI<numNlayers; NI++) { 
-        //for (NI=0; NI<1; NI++) 
+          // Loop over different factors to multiply d2 by
+          for (F2=0; F2<numFac; F2++) {
 
-          Nlayer = 7 + NI;
-          //Nlayer = 9;
+            fac2 = 0.6 + (1./20)*F2;
+            //fac2 = 0.71123+(1./20)*F2;
+            //  Loop over different number of layers
+       
+            for (NI=0; NI<numNlayers; NI++) { 
 
-          // NLa vector stores the value of Nlayer_i for layter use
-          NLa[NI] = Nlayer;
+              Nlayer = 7 + NI;
+              //Nlayer = 9;
 
-          // Vector to store the thicknesses in micrometers of each layer
-          d[0] = 0.;
+              // NLa vector stores the value of Nlayer_i for layter use
+              NLa[NI] = Nlayer;
 
-          d[1] = dalloy;
+              // Vector to store the thicknesses in micrometers of each layer
+              d[0] = 0.;
 
-          // Refractive index of air
-          rind[0] = 1.00 + 0.*I;
+              d[1] = dalloy;
 
-          rind[1] = 1.00 + 0.*I;
+              // Refractive index of air
+              rind[0] = 1.00 + 0.*I;
 
-          // Now start the Bragg Reflector
-          for (i=2; i<Nlayer-2; i++) {
+              rind[1] = 1.00 + 0.*I;
 
-            if (i%2==0) {
-              d[i] = d1*fac1;
-              rind[i] = nlow + 0.*I;
-            }
-            else {
-              d[i] = d2*fac2;
-              rind[i] = nhi + 0.*I;
-            }
-          }
+              // Now start the Bragg Reflector
+              for (i=2; i<Nlayer-2; i++) {
 
-          d[Nlayer-3] = 0.01;
-          rind[Nlayer-3] = sqrt(epsbg) + 0.*I;
-          // W layer that is the substrate for the Bragg Reflector
-          d[Nlayer-2] = 0.9;
-          // Temporary - will replace with Tungsten!
-          rind[Nlayer-2] = 1.0 + 0.*I;
+                if (i%2==0) {
+                  d[i] = d1*fac1;
+                  rind[i] = nlow + 0.*I;
+                }
+                else {
+                  d[i] = d2*fac2;
+                  rind[i] = nhi + 0.*I;
+                }
+              }
+
+              d[Nlayer-3] = 0.01;
+              rind[Nlayer-3] = sqrt(epsbg) + 0.*I;
+              // W layer that is the substrate for the Bragg Reflector
+              d[Nlayer-2] = 0.9;
+              // Temporary - will replace with Tungsten!
+              rind[Nlayer-2] = 1.0 + 0.*I;
  
-          // Air underneath
-          d[Nlayer-1] = 0.;
-          rind[Nlayer-1] = 1.0 + 0.*I;
+              // Air underneath
+              d[Nlayer-1] = 0.;
+              rind[Nlayer-1] = 1.0 + 0.*I;
  
  
-         //  Top/Bottom layer RI for Transmission calculation
-         n1 = creal(rind[0]);
-         n2 = creal(rind[Nlayer-1]);
+             //  Top/Bottom layer RI for Transmission calculation
+             n1 = creal(rind[0]);
+             n2 = creal(rind[Nlayer-1]);
    
-         // Normal incidence
-         thetaI = 0;
-         for (i=0; i<NumLam; i++) {
-
-           lambda = 400e-9 + i*2e-9; 
-           LamList[i] = lambda;    // Lambda in meters
-           k0 = 2*pi*1e-6/lambda;  // k0 in inverse microns - verified
-           w=2*pi*c/lambda;        // angular frequency 
- 
+             // Normal incidence
+             thetaI = 0;
+             for (i=0; i<NumLam; i++) {
+    
+               lambda = 400e-9 + i*2e-9; 
+               LamList[i] = lambda;    // Lambda in meters
+               k0 = 2*pi*1e-6/lambda;  // k0 in inverse microns - verified
+               w=2*pi*c/lambda;        // angular frequency 
+  
            
-           //w_ald[i]*w_ald[i];
-           // Alloy superstrate Layer (Layer 1 in the structure [Layer 0 is air!])
-           Lorentz(ML*numVars, d2l, w*hbarev, &eps_real, &eps_imag);
-           eps_metal = eps_real + I*eps_imag;
-
-           MaxwellGarnett(vf1, epsbg, eps_metal, &eta, &kappa);
-
-           //Bruggenman(vf1,epsbg, epsald, &eta, &kappa);
-           rind[1] = eta + I*kappa; 
-
-
-           // Alumina layer
-           rind[Nlayer-3] = sqrt(epsbg);
-
-           // W substrate layer (Layer N-2 in the structure [layer N-1 is air!])
-           MaxwellGarnett(1.0, epsbg, eps_metal, &eta, &kappa);
-           rind[Nlayer-2] = eta + I*kappa;
+               //w_ald[i]*w_ald[i];
+               // Alloy superstrate Layer (Layer 1 in the structure [Layer 0 is air!])
+               Lorentz(ML*numVars, d2l, w*hbarev, &eps_real, &eps_imag);
+               eps_metal = eps_real + I*eps_imag;
+  
+               MaxwellGarnett(vf1, epsbg, eps_metal, &eta, &kappa);
+  
+               //Bruggenman(vf1,epsbg, epsald, &eta, &kappa);
+               rind[1] = eta + I*kappa; 
+  
+  
+               // Alumina layer
+               rind[Nlayer-3] = sqrt(epsbg);
+  
+               // W substrate layer (Layer N-2 in the structure [layer N-1 is air!])
+               MaxwellGarnett(1.0, epsbg, eps_metal, &eta, &kappa);
+               rind[Nlayer-2] = eta + I*kappa;
+   
+               // Solve the Transfer Matrix Equations
+               TransferMatrix(thetaI, k0, rind, d, &cosL, &beta, &alpha, &m11, &m21);
  
-           // Solve the Transfer Matrix Equations
-           TransferMatrix(thetaI, k0, rind, d, &cosL, &beta, &alpha, &m11, &m21);
+               rho = (2*pi*h*c*c/pow(lambda,5))*(1/(exp(h*c/(lambda*kb*Temp))-1));
  
-           rho = (2*pi*h*c*c/pow(lambda,5))*(1/(exp(h*c/(lambda*kb*Temp))-1));
+               // Fresnel reflection coefficient (which is complex if there are absorbing layers)
+               r = m21/m11; 
  
-           // Fresnel reflection coefficient (which is complex if there are absorbing layers)
-           r = m21/m11; 
+               // Stored energy 
+               st = (r + 1);
+               st = st*conj(st);
+               // Fresnel transmission coefficient (also complex if there are absorbing layers)
+               t = 1./m11;
  
-           // Stored energy 
-           st = (r + 1);
-           st = st*conj(st);
-           // Fresnel transmission coefficient (also complex if there are absorbing layers)
-           t = 1./m11;
+               // Reflectance, which is a real quantity between 0 and 1
+               R = creal(r*conj(r));
+               Tangle =  n2*creal(cosL)/(n1*cos(thetaI));
+               T = creal(t*conj(t))*Tangle;
+               A = 1 - R - T;
  
-           // Reflectance, which is a real quantity between 0 and 1
-           R = creal(r*conj(r));
-           Tangle =  n2*creal(cosL)/(n1*cos(thetaI));
-           T = creal(t*conj(t))*Tangle;
-           A = 1 - R - T;
- 
-           // Store absorbance/emissivity in array Emiss
-           Emiss[i] = A;
+               // Store absorbance/emissivity in array Emiss
+               Emiss[i] = A;
  
  
-         }
+             }
          
-         double SE = SpectralEfficiency(Emiss, NumLam, LamList, lbg, Temp, &PU);
-         //printf("HI %8.6f    %8.6f   %8.6f    %8.6e    %8.6e    %8.6f    %i     %12.10f  %12.10e\n",
-         //           vf1,     nhi,    nlow,    d1*fac1, d2*fac2, Temp,  Nlayer,  SE,      PU);
-         printf("  %8.6f  %i  %8.6f  %8.6f  %8.6f  %12.10e  %12.10e\n",vf1,Nlayer, d1*fac1, d2*fac2, Temp, SE, PU);
-         SEA[TI*numT*numVf*numFac*numFac+TK*numVf*numFac*numFac+F1*numFac*numFac+F2*numFac+NI] = SE;
-         SDA[TI*numT*numVf*numFac*numFac+TK*numVf*numFac*numFac+F1*numFac*numFac+F2*numFac+NI] = PU;
+             double SE = SpectralEfficiency(Emiss, NumLam, LamList, lbg, Temp, &PU);
+             //printf("HI %8.6f    %8.6f   %8.6f    %8.6e    %8.6e    %8.6f    %i     %12.10f  %12.10e\n",
+             //           vf1,     nhi,    nlow,    d1*fac1, d2*fac2, Temp,  Nlayer,  SE,      PU);
 
+printf("  %s   %8.6e  %8.6e  %8.6e  %8.6e  %8.6e  %8.6e  %8.6e  %8.6e  %8.6e  %i  %8.6e  %8.6e  %8.6e  %8.6e  %8.6e  %8.6e\n",
+         type,d2l[ML*9+0],d2l[ML*9+1],d2l[ML*9+2],d2l[ML*9+3],d2l[ML*9+4],d2l[ML*9+5],d2l[ML*9+6],d2l[ML*9+7],d2l[ML*9+8],
+         Nlayer, vf1, d1*fac1, d2*fac2, Temp, SE, PU);
+//printf("  Type  epsinf  ampD  gammaD  ampL1  omL1  gammaL1   ampL2   omL2   gammaL2   NL   vf    d1        d2        Temp         SE                SD\n");
+//             printf("  %8.6f  %i  %8.6f  %8.6f  %8.6f  %12.10e  %12.10e\n",vf1,Nlayer, d1*fac1, d2*fac2, Temp, SE, PU);
+//             SEA[TI*numT*numVf*numFac*numFac+TK*numVf*numFac*numFac+F1*numFac*numFac+F2*numFac+NI] = SE;
+//             SDA[TI*numT*numVf*numFac*numFac+TK*numVf*numFac*numFac+F1*numFac*numFac+F2*numFac+NI] = PU;
+
+           }
+         }
        }
      }
    }
  }
- }
- }
  return 0;
 
- }
+}
  
  /*
   FILE *pf;
